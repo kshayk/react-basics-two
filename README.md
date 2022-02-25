@@ -1,4 +1,4 @@
-##Styling with React
+## Styling with React
 
 <ins>Conditional in-element styling</ins>
 
