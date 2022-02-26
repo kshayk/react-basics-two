@@ -475,3 +475,301 @@ Here is what is showing in my browser after applying a CSS module on my ```<butt
 <button type="submit" class="Button_button__3NBJX">Add Goal</button>
 ```
 
+We can also go with the same approach of CSS modules in the ```CourseInput.js``` where we have a styled "form-control" div
+which earlier transformed into a styled component.
+So once again, we will need to rename ```CourseInput.css``` to ```CourseInput.module.css```. We then change the ```FormControl``` 
+styled component into a regular div, so we can then apply the className based on the CSS module class.
+
+If you remember earlier, we did the same thing with the ```Button.js``` component. With the button element we changed it 
+back to regular HTML ```<buttom>``` element, and we applied the class name from the CSS module:
+
+```javascript
+<button type={type} className={styles.button} onClick={onClick}>
+```
+
+Since the class selector in the ```Button.module.css``` file was simply "button" we used ```styles.button``` in order to 
+reference that class name.
+
+But with ```CourseInput.module.css``` we have a problem; the class selector in this file is ```.form-control``` and if we
+try to do ```<div className={styles.form-control}>``` we get an error because ```form-control``` is not a valid object property
+in JavaScript.
+
+Fortunately, we can also access object's properties with square brackets, like an array index. So in ```CourseInput``` case,
+we will use the following syntax:
+
+```javascript
+return (
+    <form onSubmit={formSubmitHandler}>
+        <div className={styles['form-control']}>
+            <label>Course Goal</label>
+            <input type="text" onChange={goalInputChangeHandler}/>
+        </div>
+        <Button type="submit">Add Goal</Button>
+    </form>
+);
+```
+
+And of course, first we will also need to import the CSS module file in the same way we did it in the ```Button``` component:
+
+```javascript
+import styles from './CourseInput.module.css';
+```
+
+As opposed to the ```Button``` component, in the ```CourseInput``` component we should have a conditional class name of
+"invalid" whenever the form input value is invalid, so we can add some red styling to the form, indicating that the form is invalid.
+
+
+Currently, this "invalid" logic does not work by only applying the ```styles['form-control']``` className, we should also 
+need to add the conditional "invalid" class whenever the ```isValid``` state is false. To do that we use the previously covered
+way of adding a conditional class names by using template literals in the className prop:
+
+```javascript
+<div className={`${styles['form-control']} ${!isValid && styles.invalid}`}>
+```
+
+That way we concatenate both the "form-control" class name and the "invalid" class name. You can see that the "invalid" 
+class name is also generated from the CSS module class as a property, and as a result we use ```styles.invalid``` to apply
+the class name into the div.
+
+As previously mentioned in the styled components section, we added a ```@media``` query to the styled component string.
+But since now we use the CSS modules, we simply use the ```@media``` query in the ```Button.module.css``` file normally, 
+making sure that inside that ```@media``` query we specify the class we want to change:
+
+```css
+@media (min-width: 768px) {
+  .button {
+    width: auto;
+  }
+}
+```
+
+Since we wanted the button to have a width of 100% whenever the media is below 768 pixels, we should specify it under the
+```.button``` main style:
+
+```css
+.button {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem 1.5rem;
+  border: 1px solid #8b005d;
+  color: white;
+  background: #8b005d;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.26);
+  cursor: pointer;
+}
+```
+
+
+##
+<ins>Debugging the React Project</ins>
+
+### Error Messages
+
+While working on your React app you might encounter some compiling errors. Those errors will appear whenever you build your
+app. for example when running ```npm run start```.
+
+A lot of times, React will tell us exactly what the error is, and even when it occurs in the code. This allows us to easily
+detect the problem and fix it in the correct location.
+
+For example, in our ```App.js``` component, we have this return statement:
+
+```javascript
+return (
+    <div>
+      <section id="goal-form">
+        <CourseInput onAddGoal={addGoalHandler} />
+      </section>
+      <section id="goals">
+        {content}
+      </section>
+    </div>
+);
+```
+
+The two ```<section>``` elements are wrapped with a ```<div>``` element. As we know, a return statement of a React component
+must have only one wrapper element. So if we remove the ```<div>``` element, we are left with this code:
+
+```javascript
+return (
+      <section id="goal-form">
+        <CourseInput onAddGoal={addGoalHandler} />
+      </section>
+      <section id="goals">
+        {content}
+      </section>
+  );
+```
+
+This is an invalid code by React standards, and it will result in a compilation failure. So when we run ```npm run start```
+ we will be prompted with the following error in the terminal window:
+
+```bash
+Failed to compile.
+
+./src/App.js
+SyntaxError: /Users/shayk/dev/projects/react-basics-two/src/App.js: Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>? (42:6)
+
+  40 |         <CourseInput onAddGoal={addGoalHandler} />
+  41 |       </section>
+> 42 |       <section id="goals">
+     |       ^
+  43 |         {content}
+  44 |       </section>
+  45 |   );
+```
+
+As we can see, it tells us exactly what the problem is and also what file and line of code it occurs in: 
+```SyntaxError: /Users/shayk/dev/projects/react-basics-two/src/App.js: Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>? (42:6)```
+
+If we go to the browser and try to run the application in ```localhost:3000```, we might see a blank page, but if we go to 
+the console in the developer tools (by clicking ```F12``` in the Chrome browser), we should see the same error:
+
+```bash
+index.js:1 src/App.js
+  Line 42:7:  Parsing error: Adjacent JSX elements must be wrapped in an enclosing tag. Did you want a JSX fragment <>...</>?
+
+  40 |         <CourseInput onAddGoal={addGoalHandler} />
+  41 |       </section>
+> 42 |       <section id="goals">
+     |       ^
+  43 |         {content}
+  44 |       </section>
+  45 |   );
+```
+
+React makes it easy on us to understand the errors we get in the application, and usually it will be pretty easy to find and
+fix those errors.
+
+
+### Warning Messages
+
+Sometimes a compilation will execute with no errors, but we might get run-time errors when using the application in the 
+browser. For example, as we know, when creating elements through iterations in React, we must add a ```key``` prop with a 
+unique value to each of the elements. If we do not do that, although React strongly recommends doing so, we will not get any
+compilation errors when building the application. Instead, when running the app in the browser, we will get some warnings 
+in the console which indicate that there is no ```key``` property to those elements.
+
+For example, we have this code in ```CourseGoualList.js```:
+
+```javascript
+const CourseGoalList = props => {
+  return (
+    <ul className="goal-list">
+      {props.items.map(goal => (
+        <CourseGoalItem
+          key={goal.id}
+          id={goal.id}
+          onDelete={props.onDeleteItem}
+        >
+          {goal.text}
+        </CourseGoalItem>
+      ))}
+    </ul>
+  );
+};
+```
+
+We iterate through the goals with ```map```. Each goal will render a new ```<CourseGoalItem>``` component with some props,
+including a ```key``` prop which is essential for iterated items.
+
+If we then remove the ```key``` prop from the components:
+
+```javascript
+const CourseGoalList = props => {
+  return (
+    <ul className="goal-list">
+      {props.items.map(goal => (
+        <CourseGoalItem
+          id={goal.id}
+          onDelete={props.onDeleteItem}
+        >
+          {goal.text}
+        </CourseGoalItem>
+      ))}
+    </ul>
+  );
+};
+```
+
+It will compile the project as usual, but when we run the application in the browser we will see the following warning:
+
+```bash
+index.js:1 Warning: Each child in a list should have a unique "key" prop.
+
+Check the render method of `CourseGoalList`. See https://reactjs.org/link/warning-keys for more information.
+    at CourseGoalItem (http://localhost:3000/static/js/main.chunk.js:554:21)
+    at CourseGoalList (http://localhost:3000/main.be7cddc59bcc2b3b2c9a.hot-update.js:31:21)
+    at section
+    at div
+    at App (http://localhost:3000/static/js/main.chunk.js:266:95)
+```
+
+Those warnings should not be ignored and you most likely will need to fix them. That's why it is generally a good idea to
+have the console opened in your browser when you are testing your React code. 
+
+
+### React Developer Tools
+
+The Chrome browser offers an option to add an extension called "React Developer Tools". This extension allows us to view
+all the components of the current the UI in the developer tools of the browser (by clicking ```F12```),
+showing their hierarchy, states and values.
+
+For example, if we visit the main page of our current project:
+![alt text](readme-assets/mainPage.png)
+
+By clicking the ```F12``` button and accessing the developer tools, we can see that we now have an option called "Components"
+with a React logo:
+
+![alt text](readme-assets/components.png)
+
+When accessing this, we are seeing the component tree of the current UI on the left. So we can see that on the top of that
+tree there is the ```App``` component, and below the ```App``` components we have the ```CourseInput``` and the ```CourseGoalList```
+as the child components.
+
+In this current example we clicked on the ```CourseInput``` component as it is highlighted in blue in the developer tools.
+When clicking on a component in this component tree, all the info regarding the component is shown on the right side of the
+developer tools.
+
+On this panel we have several sections. Let's try to break down those sections one by one:
+
+#### 1. props
+
+The ```props``` section indicates which props are passed on to this component. In this case the only prop that is sent to
+the ```CourseInput``` component is a function called ```addGoalHandler```.
+
+#### 2. hooks
+
+The ```hooks``` section indicates all the hooks that are in use in this component. It doesn't specify the variable name 
+of each hook, but it will show the current value of the hook. In this example we have 2 hooks in the ```CourseInput``` component.
+The first hook is the text input state hook value while the second hook is the ```isValid``` state hook which is currently true.
+We can see those hooks in the component code:
+
+```javascript
+const [enteredValue, setEnteredValue] = useState('');
+const [isValid, setIsValid] = useState(true);
+```
+
+You should know that you are able to change the hooks values (especially the state ones) inside the React developer tools
+in order to check the functionality of the component without needing to reach the certain state by performing actual actions
+on the UI. You can simple select the desired state hook in the left panel and change its value.
+
+#### 3. rendered by
+
+The ```rendered by``` section is the hierarchy of the creation of the selected component. It means that it will list all
+the parent components of the selected component. In this case, the CourseInput component is rendered as a children component
+of the ```App``` component. We can also see this in the left panel where the whole component tree is shown.
+
+If we selected the ```Button``` component instead, the ```rendered by``` section would have looked like that:
+
+![alt text](readme-assets/buttonComponent.png)
+
+That's because the ```Button``` component is rendered by the ```CourseInput``` component which is rendered by the ```App```
+component.
+
+Note that in the ```rendered by``` section, the top most component is the immediate parent of the selected component, and
+the one below it is the component that rendered the parent component and so on...
+
+#### 4. source
+
+The ```source``` section shows where in the code did the selected component was created, including the file name and the
+line of code.
